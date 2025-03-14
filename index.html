@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clexane Store Locator - Sanofi</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="logo-container">
+            <img src="https://www.sanofi.com/-/media/Project/One-Sanofi-Web/Websites/Global/Sanofi-COM/Home/common/imgs/header-footer/sanofi-logo.svg" alt="Sanofi Logo" class="logo">
+        </div>
+        <h1>Find Nearby Medical Stores</h1>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <section class="welcome-section">
+            <h2>Welcome to Clexane Store Locator</h2>
+            <p>Find the nearest medical stores with Clexane availability</p>
+            
+            <div class="location-permission">
+                <p>Please allow location access to find stores near you</p>
+                <button id="locationBtn" class="primary-button">Allow Location Access</button>
+            </div>
+
+            <div id="loadingIndicator" class="loading-indicator hidden">
+                <div class="spinner"></div>
+                <p>Searching for nearby stores...</p>
+            </div>
+        </section>
+
+        <!-- Store Results -->
+        <section id="storeResults" class="store-results hidden">
+            <div class="results-header">
+                <p><span id="storeCount">1</span> stores found nearby</p>
+                
+                <div class="sort-options">
+                    <label for="sortSelect">Sort by:</label>
+                    <select id="sortSelect">
+                        <option value="distance">Distance</option>
+                        <option value="name">Name</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="storeList" class="store-list">
+                <!-- Store cards will be dynamically added here -->
+                <div class="store-card">
+                    <h4>Medical Store Name</h4>
+                    <p class="contact">📞 +1 234 567 890</p>
+                    <p class="address">123 Healthcare Street, Medical District</p>
+                    <p class="location">City, Country</p>
+                    <p class="distance">0.5 km away</p>
+                    <button class="direction-button" onclick="openDirections(28.6139, 77.2090)">View Direction</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Notifications -->
+        <div id="notifications" class="notifications hidden">
+            <div class="notification error-message hidden">
+                Location access denied. Please enable location services to use this feature.
+            </div>
+            <div class="notification no-stores hidden">
+                No medical stores found in your area.
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-links">
+            <a href="#">Privacy Policy</a>
+            <a href="#">Terms of Service</a>
+        </div>
+        <div class="footer-info">
+            <p>© 2024 Sanofi. All rights reserved.</p>
+            <img src="https://www.sanofi.com/-/media/Project/One-Sanofi-Web/Websites/Global/Sanofi-COM/Home/common/imgs/header-footer/sanofi-logo.svg" alt="Sanofi" class="footer-logo">
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const locationBtn = document.getElementById('locationBtn');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const notifications = document.getElementById('notifications');
+            const errorMessage = notifications.querySelector('.error-message');
+            const storeResults = document.getElementById('storeResults');
+
+            locationBtn.addEventListener('click', function() {
+                // Show loading indicator
+                loadingIndicator.classList.remove('hidden');
+                
+                // Check if geolocation is supported
+                if (!navigator.geolocation) {
+                    showError("Geolocation is not supported by your browser");
+                    return;
+                }
+
+                // Request location access
+                navigator.geolocation.getCurrentPosition(
+                    // Success callback
+                    function(position) {
+                        const latitude = position.coords.latitude;
+                        const longitude = position.coords.longitude;
+                        
+                        // Here you would typically send these coordinates to your PHP backend
+                        console.log(`Location accessed - Latitude: ${latitude}, Longitude: ${longitude}`);
+                        
+                        // Hide loading indicator and show results section
+                        loadingIndicator.classList.add('hidden');
+                        storeResults.classList.remove('hidden');
+                        
+                        // You can send these coordinates to your PHP backend using fetch
+                        // fetch('your-php-endpoint.php', {
+                        //     method: 'POST',
+                        //     headers: {
+                        //         'Content-Type': 'application/json',
+                        //     },
+                        //     body: JSON.stringify({
+                        //         latitude: latitude,
+                        //         longitude: longitude
+                        //     })
+                        // });
+                    },
+                    // Error callback
+                    function(error) {
+                        loadingIndicator.classList.add('hidden');
+                        let errorMsg = "";
+                        switch(error.code) {
+                            case error.PERMISSION_DENIED:
+                                errorMsg = "Location access denied. Please enable location services to use this feature.";
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                errorMsg = "Location information is unavailable.";
+                                break;
+                            case error.TIMEOUT:
+                                errorMsg = "Location request timed out.";
+                                break;
+                            default:
+                                errorMsg = "An unknown error occurred while accessing location.";
+                        }
+                        showError(errorMsg);
+                    },
+                    // Options
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 5000,
+                        maximumAge: 0
+                    }
+                );
+            });
+
+            function showError(message) {
+                errorMessage.textContent = message;
+                notifications.classList.remove('hidden');
+                errorMessage.classList.remove('hidden');
+                setTimeout(() => {
+                    notifications.classList.add('hidden');
+                    errorMessage.classList.add('hidden');
+                }, 5000);
+            }
+        });
+
+        // Function to open Google Maps with directions
+        function openDirections(destLat, destLng) {
+            // Get user's current location (if available)
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const origin = `${position.coords.latitude},${position.coords.longitude}`;
+                        const destination = `${destLat},${destLng}`;
+                        const url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`;
+                        window.open(url, '_blank');
+                    },
+                    // If location access fails, use destination coordinates only
+                    () => {
+                        const url = `https://www.google.com/maps/search/?api=1&query=${destLat},${destLng}`;
+                        window.open(url, '_blank');
+                    }
+                );
+            } else {
+                // Fallback if geolocation is not supported
+                const url = `https://www.google.com/maps/search/?api=1&query=${destLat},${destLng}`;
+                window.open(url, '_blank');
+            }
+        }
+    </script>
+</body>
+</html>
